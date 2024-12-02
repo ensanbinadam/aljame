@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مراجعة الجمع</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .score-board {
+            font-size: 18px;
+            margin-bottom: 20px;
+            white-space: nowrap;
+        }
+
+        .shapes-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .shapes-box {
+            width: 45%;
+            min-height: 100px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        .shapes-box div {
+            font-size: 24px;
+            margin: 2px;
+        }
+
+        .operator {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .answers {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .answer {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background: #eee;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .answer.correct {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+        .answer.wrong {
+            background: #f44336;
+            color: #fff;
+        }
+
+        .next-btn {
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .next-btn:hover {
+            background: #0056b3;
+        }
+
+        .summary {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">مراجعة الجمع</div>
+        <div class="score-board">
+            السؤال: <span id="questionNumber">٠</span>/٢٠ |
+            الدرجة: <span id="score">٠</span>/٢٠
+        </div>
+        <div class="shapes-container">
+            <div class="shapes-box" id="group1"></div>
+            <div class="operator">+</div>
+            <div class="shapes-box" id="group2"></div>
+        </div>
+        <div class="answers" id="answers"></div>
+        <button class="next-btn" id="next">السؤال التالي</button>
+    </div>
+
+    <script>
+        const arabicNumbers = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "١٠"];
+        const symbols = ["⭐", "⚪", "⬤", "🍎", "🌟", "🔵", "💠", "❄"];
+        let questionNumber = 0;
+        let score = 0;
+        const totalQuestions = 20;
+        let correctAnswer;
+
+        // دالة لتحويل الأرقام إلى التنسيق الهندي
+        function formatNumber(num) {
+            return num.toString().replace(/\d/g, (d) => arabicNumbers[d]);
+        }
+
+        function generateShapes(number) {
+            const group = document.createElement("div");
+            const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+            for (let i = 0; i < number; i++) {
+                const shape = document.createElement("div");
+                shape.textContent = symbol;
+                group.appendChild(shape);
+            }
+            return group.innerHTML;
+        }
+
+        function generateQuestion() {
+            const group1Count = Math.floor(Math.random() * 6) + 1;
+            const group2Count = Math.floor(Math.random() * (10 - group1Count)) + 1;
+            correctAnswer = group1Count + group2Count;
+
+            document.getElementById("group1").innerHTML = generateShapes(group1Count);
+            document.getElementById("group2").innerHTML = generateShapes(group2Count);
+
+            const answers = document.getElementById("answers");
+            answers.innerHTML = "";
+
+            const correctIndex = Math.floor(Math.random() * 3);
+            for (let i = 0; i < 3; i++) {
+                const answer = document.createElement("div");
+                answer.className = "answer";
+                if (i === correctIndex) {
+                    answer.textContent = formatNumber(correctAnswer);
+                    answer.onclick = () => handleAnswer(true, answer);
+                } else {
+                    let wrongAnswer;
+                    do {
+                        wrongAnswer = Math.floor(Math.random() * 11);
+                    } while (wrongAnswer === correctAnswer);
+                    answer.textContent = formatNumber(wrongAnswer);
+                    answer.onclick = () => handleAnswer(false, answer);
+                }
+                answers.appendChild(answer);
+            }
+        }
+
+        function handleAnswer(isCorrect, selectedAnswer) {
+            const answers = document.querySelectorAll(".answer");
+            answers.forEach(answer => {
+                answer.onclick = null;
+                if (answer.textContent === formatNumber(correctAnswer)) {
+                    answer.classList.add("correct");
+                } else {
+                    answer.classList.add("wrong");
+                }
+            });
+
+            if (isCorrect) score++;
+            document.getElementById("score").textContent = formatNumber(score);
+        }
+
+        function nextQuestion() {
+            if (questionNumber < totalQuestions) {
+                questionNumber++;
+                document.getElementById("questionNumber").textContent = formatNumber(questionNumber);
+                generateQuestion();
+            } else {
+                displaySummary();
+            }
+        }
+
+        function displaySummary() {
+            const container = document.querySelector(".container");
+            container.innerHTML = `
+                <div class="summary">لقد أكملت المراجعة!</div>
+                <div>إجاباتك الصحيحة: ${formatNumber(score)} من ${formatNumber(totalQuestions)}</div>
+                <button class="next-btn" onclick="location.reload()">ابدأ من جديد</button>
+            `;
+        }
+
+        document.getElementById("next").addEventListener("click", nextQuestion);
+
+        generateQuestion();
+    </script>
+</body>
+
+</html>
